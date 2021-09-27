@@ -1,0 +1,32 @@
+using System.Collections.Generic;
+
+namespace yield
+{
+    public static class MovingMaxTask
+    {
+        public static IEnumerable<DataPoint> MovingMax(this IEnumerable<DataPoint> data, int windowWidth)
+        {
+            var currentWindow = new Queue<double>();
+            var potentialMaximums = new LinkedList<double>();
+
+            foreach (var point in data)
+            {
+                currentWindow.Enqueue(point.OriginalY);
+                
+                while (currentWindow.Count > windowWidth)
+                {
+                    var forgotten = currentWindow.Dequeue(); // Если число когда-то было максимумом в окне, но
+                    if (forgotten == potentialMaximums.First.Value) // теперь выходит из этого окна, то и из
+                        potentialMaximums.RemoveFirst(); // списка потенциальных максимумов оно тоже выходит
+                }
+
+                // Убираем справа все те значения, что меньше текущего
+                while (potentialMaximums.Count > 0 && point.OriginalY > potentialMaximums.Last.Value)
+                    potentialMaximums.RemoveLast();
+                potentialMaximums.AddLast(point.OriginalY);
+
+                yield return point.WithMaxY(potentialMaximums.First.Value);
+            }
+        }
+    }
+}

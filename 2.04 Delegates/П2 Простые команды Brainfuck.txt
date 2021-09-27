@@ -1,0 +1,61 @@
+using System;
+
+namespace func.brainfuck
+{
+	public class BrainfuckBasicCommands
+	{
+		private const string CommandLiterals = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+		public static void RegisterTo(IVirtualMachine vm, Func<int> read, Action<char> write)
+		{
+			vm.RegisterMemoryCommands();
+			vm.RegisterIpCommands();
+			vm.RegisterIoStreamCommands(read, write);
+
+			Action<IVirtualMachine, char> generateLiteralCommand = (machine, symbol)
+				=> { machine.Memory[machine.MemoryPointer] = (byte) symbol; };
+			foreach (var symbol in CommandLiterals)
+			{
+				var tmpSymbol = symbol;
+				vm.RegisterCommand(tmpSymbol, machine => generateLiteralCommand(machine, tmpSymbol));
+			}
+		}
+	}
+	
+	public static class VirtualMachineExtension
+	{
+		private static int TakePositiveMod(int x, int y) => x % y >= 0 ? x % y : x % y + y;
+
+		public static void RegisterMemoryCommands(this IVirtualMachine vm)
+		{
+			Action<IVirtualMachine, bool> changeMemory = (machine, ascending) =>
+			{
+				machine.Memory[machine.MemoryPointer] =
+					(byte) TakePositiveMod(machine.Memory[machine.MemoryPointer] + (ascending ? 1 : -1), byte.MaxValue + 1);
+			};
+			
+			vm.RegisterCommand('+', machine => changeMemory(machine, true));
+			vm.RegisterCommand('-', machine => changeMemory(machine, false));
+		}
+
+		public static void RegisterIpCommands(this IVirtualMachine vm)
+		{
+			Action<IVirtualMachine, bool> changeIp = (machine, ascending) =>
+			{
+				machine.MemoryPointer 
+					= TakePositiveMod(machine.MemoryPointer + (ascending ? 1 : -1), machine.Memory.Length);
+			};
+			
+			vm.RegisterCommand('>', machine => changeIp(machine, true));
+			vm.RegisterCommand('<', machine => changeIp(machine, false));	
+		}
+
+		public static void RegisterIoStreamCommands(this IVirtualMachine vm, Func<int> read, Action<char> write)
+		{
+			vm.RegisterCommand('.', machine 
+				=> { write((char) machine.Memory[machine.MemoryPointer]); });
+			vm.RegisterCommand(',', machine
+				=> { machine.Memory[machine.MemoryPointer] = (byte) read(); });
+		}
+	}
+}

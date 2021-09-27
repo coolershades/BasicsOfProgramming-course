@@ -1,0 +1,47 @@
+using System;
+using System.Collections.Generic;
+
+namespace Antiplagiarism
+{
+    public static class LongestCommonSubsequenceCalculator
+    {
+        public static List<string> Calculate(List<string> first, List<string> second)
+        {
+            if (first.Count == 0 || second.Count == 0) return new List<string>();
+            
+            var opt = CreateOptimizationTable(first, second);
+            return RestoreAnswer(opt, first, second, first.Count, second.Count);
+        }
+
+        private static int[,] CreateOptimizationTable(List<string> first, List<string> second)
+        {
+            var opt = new int[first.Count + 1, second.Count + 1];
+            
+            for (var i = 1; i <= first.Count; i++)
+            for (var j = 1; j <= second.Count; j++)
+                opt[i, j] = first[i - 1] == second[j - 1]
+                    ? opt[i, j] = opt[i - 1, j - 1] + 1
+                    : opt[i, j] = Math.Max(opt[i, j - 1], opt[i - 1, j]);
+            
+            return opt;
+        }
+
+        private static List<string> RestoreAnswer(int[,] opt, List<string> first,
+            List<string> second, int i, int j)
+        {
+            if (i == 0 || j == 0) return new List<string>();
+            
+            if (first[i - 1] == second[j - 1])
+            {
+                var result = RestoreAnswer(opt, first, second, i - 1, j - 1);
+                result.Add(first[i - 1]);
+                return result;
+            }
+                
+            if (opt[i, j - 1] > opt[i - 1, j])
+                return RestoreAnswer(opt, first, second, i, j - 1);
+            
+            return RestoreAnswer(opt, first, second, i - 1, j);
+        }
+    }
+}

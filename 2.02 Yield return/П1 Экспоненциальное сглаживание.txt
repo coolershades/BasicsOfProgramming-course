@@ -1,0 +1,27 @@
+using System.Collections.Generic;
+
+namespace yield
+{
+	public static class ExpSmoothingTask
+	{
+		public static IEnumerable<DataPoint> SmoothExponentialy(this IEnumerable<DataPoint> data, double alpha)
+		{
+			var isFirstPoint = true;
+			double previousValue = 0.0;
+			
+			foreach (var point in data)
+			{
+				double currentValue;
+				if (isFirstPoint)
+				{
+					currentValue = point.OriginalY;
+					isFirstPoint = false;
+				}
+				else currentValue = previousValue + alpha * (point.OriginalY - previousValue);
+
+				yield return point.WithExpSmoothedY(currentValue);
+				previousValue = currentValue;
+			}
+		}
+	}
+}

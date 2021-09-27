@@ -1,0 +1,50 @@
+using System.Collections.Generic;
+using System.Linq;
+using DocumentTokens = System.Collections.Generic.List<string>;
+
+namespace Antiplagiarism
+{
+    public class LevenshteinCalculator
+    {
+        public List<ComparisonResult> CompareDocumentsPairwise(List<DocumentTokens> documents)
+        {
+            var comparisons = new List<ComparisonResult>();
+            
+            for (var i = 0; i < documents.Count; i++)
+            for (var j = i + 1; j < documents.Count; j++)
+            { 
+                comparisons.Add(new ComparisonResult(documents[i], documents[j], 
+                    GetLevenshteinDistance(documents[i], documents[j])));
+            }
+
+            return comparisons;
+        }
+
+        private static double GetLevenshteinDistance(DocumentTokens first, DocumentTokens second)
+        {
+            var optimalDistance = new double[first.Count + 1, second.Count + 1];
+            for (var i = 0; i <= first.Count; i++) 
+				optimalDistance[i, 0] = i;
+            for (var i = 0; i <= second.Count; i++) 
+				optimalDistance[0, i] = i;
+            
+            for (var i = 1; i <= first.Count; i++)
+            for (var j = 1; j <= second.Count; j++)
+            {
+                if (first[i - 1] != second[j - 1])
+                {
+                    var potentialSteps = new []
+                    {
+                        optimalDistance[i - 1, j] + 1,
+                        optimalDistance[i, j - 1] + 1,
+                        optimalDistance[i - 1, j - 1] + TokenDistanceCalculator
+                            .GetTokenDistance(first[i - 1], second[j - 1])
+                    };
+                    optimalDistance[i, j] = potentialSteps.Min();
+                } 
+                else optimalDistance[i, j] = optimalDistance[i - 1, j - 1];
+            }
+            return optimalDistance[first.Count, second.Count];
+        }
+    }
+}

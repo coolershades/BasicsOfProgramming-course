@@ -1,0 +1,70 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
+
+namespace hashes
+{
+    public class ReadonlyBytes : IEnumerable<byte>
+    {
+        private const int FnvPrime = 999983;
+		
+        private readonly byte[] data;
+        private int hash = -1;
+        public int Length { get { return data.Length; } }
+
+        public ReadonlyBytes(params byte[] input)
+        {
+            if (input == null)
+                throw new ArgumentNullException();
+            data = input;
+        }
+		
+        public byte this[int index] => index < Length ? data[index] 
+            : throw new IndexOutOfRangeException();
+
+        public IEnumerator<byte> GetEnumerator()
+        {
+            foreach (var byteUnit in data)
+                yield return byteUnit;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is ReadonlyBytes)) return false;
+            var readonlyBytes = obj as ReadonlyBytes;
+            if (typeof(ReadonlyBytes) != obj.GetType()) return false;
+            if (readonlyBytes.Length != Length) return false;
+			
+            for (var i = 0; i < Length; i++)
+                if (data[i] != readonlyBytes[i])
+                    return false;
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            if (hash != -1) return hash;
+            unchecked
+            {
+                var hash = 1;
+                foreach (var byteUnit in data)
+                {
+                    hash *= FnvPrime;
+                    hash ^= byteUnit;
+                }
+
+                this.hash = hash;
+                return hash;
+            }
+        }
+
+        public override string ToString()
+        {
+            var result = new StringBuilder().Append('[');
+            return result.Append(string.Join(", ", data)).Append(']').ToString();
+        }
+    }
+}

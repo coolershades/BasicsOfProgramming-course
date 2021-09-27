@@ -1,0 +1,80 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+namespace CSharpPractice
+{
+    public class LRU<T> : IEnumerable<T>
+    {
+        private readonly Dictionary<int, T> _dictionary;
+        private readonly LinkedList<int> _latestUsedKeys;
+
+        public LRU()
+        {
+            _dictionary = new Dictionary<int, T>();
+            _latestUsedKeys = new LinkedList<int>();
+        }
+        
+        public void Add(int key, T value)
+        {
+            if (_dictionary.ContainsKey(key))
+                throw new Exception("Structure already contains this key.");
+            _dictionary.Add(key, value);
+            _latestUsedKeys.AddLast(key);
+        }
+
+        public T Get(int key)
+        {
+            if (!_dictionary.ContainsKey(key))
+                throw new KeyNotFoundException();
+
+            if (_latestUsedKeys.Contains(key))
+                _latestUsedKeys.Remove(_latestUsedKeys.Find(key));
+            _latestUsedKeys.AddLast(key);
+            return _dictionary[key];
+        }
+
+        public void RemoveLeastRecentlyUsed()
+        {
+            if (_latestUsedKeys.Count > 0)
+                _dictionary.Remove(_latestUsedKeys.First.Value);
+            _latestUsedKeys.RemoveFirst();
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            foreach (var kv in _dictionary)
+                yield return kv.Value;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+    
+    class Program
+    {        
+        static void Main(string[] args)
+        {
+            var lru = new LRU<int>();
+            lru.Add(1, 10);
+            lru.Add(2, 11);
+            lru.Add(3, 12);
+            lru.Add(4, 13);
+            lru.Add(5, 14);
+            
+            foreach (var value in lru) 
+                Console.WriteLine(value);
+
+            Console.WriteLine("Getting items: ");
+            Console.WriteLine(lru.Get(1));
+            Console.WriteLine(lru.Get(3));
+            
+            Console.WriteLine("Removing 2 least recently used items.");
+            lru.RemoveLeastRecentlyUsed();
+            lru.RemoveLeastRecentlyUsed();
+
+            Console.WriteLine("Elements left: ");
+            foreach (var value in lru) 
+                Console.WriteLine(value);
+        }
+    }
+}

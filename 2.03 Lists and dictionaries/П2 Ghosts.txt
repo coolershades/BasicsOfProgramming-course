@@ -1,0 +1,38 @@
+using System;
+using System.Text;
+
+namespace hashes
+{
+	public class GhostsTask : 
+		IFactory<Document>, IFactory<Vector>, IFactory<Segment>, IFactory<Cat>, IFactory<Robot>, 
+		IMagic
+	{
+		Vector vector = new Vector(1, 2);
+		Segment segment = new Segment(new Vector(2, 2), new Vector(4, 4));
+		Document document;
+		Cat cat = new Cat("Kitty", "Manx", DateTime.MinValue);
+		Robot robot = new Robot("Bot Alexey", 89.0);
+
+		private byte[] content = { 1, 2, 3 };
+
+		public void DoMagic()
+		{
+			vector.Add(new Vector(4, 7));
+			segment.End.Add(new Vector(1, 1));
+			content[0] = 2;
+			cat.Rename("Bob");
+			Robot.BatteryCapacity++;
+		}
+
+		Vector IFactory<Vector>.Create() => vector;
+		
+		Segment IFactory<Segment>.Create() => segment;
+		
+		Document IFactory<Document>.Create() 
+			=> new Document("English pt. 1", Encoding.Unicode, content);
+			
+		Cat IFactory<Cat>.Create() => cat;
+		
+		Robot IFactory<Robot>.Create() => robot;
+	}
+}

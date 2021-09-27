@@ -1,0 +1,48 @@
+using System.Collections.Generic;
+
+namespace func.brainfuck
+{
+	public class BrainfuckLoopCommands
+	{
+		private static Dictionary<int, int> startToEnd;
+		private static Dictionary<int, int> endToStart;
+
+		private static void SetupLoops(IVirtualMachine vm)
+		{
+			startToEnd = new Dictionary<int, int>();
+			endToStart = new Dictionary<int, int>();
+			
+			var startBracketsPositions = new Stack<int>();
+			for (var ip = 0; ip < vm.Instructions.Length; ip++)
+			{
+				var command = vm.Instructions[ip];
+				if (command == '[')
+					startBracketsPositions.Push(ip);
+				else if (command == ']')
+				{
+					var (start, end) = (startBracketsPositions.Pop(), ip);
+					startToEnd.Add(start, end);
+					endToStart.Add(end, start);
+				}
+			}
+		}
+
+		public static void RegisterTo(IVirtualMachine vm)
+		{
+			SetupLoops(vm);
+			vm.RegisterCommand('[', machine =>
+			{
+				if (vm.Memory[vm.MemoryPointer] == 0
+					&& startToEnd.TryGetValue(machine.InstructionPointer, out var endPosition))
+					machine.InstructionPointer = endPosition;
+			});
+			
+			vm.RegisterCommand(']', machine =>
+			{
+				if (vm.Memory[vm.MemoryPointer] != 0
+				    && endToStart.TryGetValue(machine.InstructionPointer, out var startPosition))
+					machine.InstructionPointer = startPosition;
+			});
+		}
+	}
+}

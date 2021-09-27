@@ -1,0 +1,25 @@
+using System.Numerics;
+
+namespace Tickets
+{
+    public static class TicketsTask
+    {
+        public static BigInteger Solve(int halfLength, int totalSum)
+        {
+            if (totalSum % 2 != 0) return 0;
+            totalSum /= 2;
+            
+            var count = new BigInteger[halfLength + 1, totalSum + 1];
+            
+            for (var i = 0; i <= halfLength; i++)
+                count[i, 0] = 1;
+            
+            for (var i = 1; i <= halfLength; i++)
+            for (var j = 1; j <= totalSum; j++)
+            for (var k = 0; k < 10 && 0 <= j - k; k++)
+                count[i, j] += count[i - 1, j - k];
+            
+            return count[halfLength, totalSum] * count[halfLength, totalSum];
+        }
+    }
+}
